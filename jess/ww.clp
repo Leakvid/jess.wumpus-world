@@ -248,6 +248,11 @@
   (modify ?cave (glitter FALSE)))
 
 ;; THINK rules --------------------------------------------------------------
+(defquery adj-where-potential-wumpus
+  (declare (variables ?x ?y))
+  (adj ?x ?y ?x2 ?y2)
+  (cave (x ?x2)(y ?y2)(has-wumpus ~FALSE)))	
+
 (defrule evaluate-stench-none
   (task think) 
   (cave (x ?x)(y ?y)(stench FALSE))
@@ -265,6 +270,17 @@
   =>
   (printout t "With stench in (" ?x "," ?y "), maybe the wumpus is in (" ?x2  "," ?y2 ")." crlf)
   (modify ?f (has-wumpus MAYBE)))
+
+(defrule evaluate-stench-wumpus
+  (task think) 
+  (cave (x ?x)(y ?y)(stench TRUE))
+    (printout t "With stench in (" ?count ")." crlf)
+  ?count <- (count-query-results adj-where-potential-wumpus x y)
+  (printout t "With stench in (" ?count ")." crlf)
+  (== ?count, 1)
+  =>
+  (printout t "With stench in (" ?x "," ?y "), the wumpus is in (" ?x2  "," ?y2 ")." crlf)
+  (modify ?f (has-wumpus TRUE)))
 
 (defrule evaluate-breeze-none
   (task think) 
