@@ -248,10 +248,48 @@
   (modify ?cave (glitter FALSE)))
 
 ;; THINK rules --------------------------------------------------------------
-(defquery adj-where-potential-wumpus
+(defquery get-adjacent-where-potential-wumpus
+  "query all adj caves where wumpus can be"
   (declare (variables ?x ?y))
   (adj ?x ?y ?x2 ?y2)
   (cave (x ?x2)(y ?y2)(has-wumpus ~FALSE)))	
+
+(deffunction is-wumpus-for-sure (?x ?y)
+  (bind ?count (count-query-results get-adjacent-where-potential-wumpus ?x ?y))
+  (return (= ?count 1)))
+
+(defrule can-deduce-wumpus
+  "deduce wumpus if there is only 1 adjacent cave where it can be"
+  (task think)
+  (cave (x ?x)(y ?y)(stench TRUE))
+  (test (is-wumpus-for-sure ?x ?y))
+  (adj ?x ?y ?x2 ?y2)
+  ?f <- (cave (x ?x2)(y ?y2)(has-wumpus ~FALSE))	
+  =>
+  (printout t "-- There MUST be a wumpus in (" ?x2  "," ?y2 ")." crlf)
+  (modify ?f (has-wumpus TRUE)(safe FALSE)))
+
+(defquery get-adjacent-where-potential-pit
+  "query all adj caves where pit can be"
+  (declare (variables ?x ?y))
+  (adj ?x ?y ?x2 ?y2)
+  (cave (x ?x2)(y ?y2)(has-pit ~FALSE)(safe FALSE)))
+
+(deffunction is-pit-for-sure (?x ?y)
+  (bind ?count (count-query-results get-adjacent-where-potential-pit ?x ?y))
+  (return (= ?count 1)))
+
+(defrule can-deduce-pit
+  "deduce pit if there is only 1 adjacent cave where it can be"
+  (task think)
+  (cave (x ?x)(y ?y)(breeze TRUE))
+  (test (is-pit-for-sure ?x ?y))
+  (adj ?x ?y ?x2 ?y2)
+  ?f <- (cave (x ?x2)(y ?y2)(has-pit ~FALSE))	
+  =>
+  (printout t "-- There MUST be a pit in (" ?x2  "," ?y2 ")." crlf)
+  (modify ?f (has-pit TRUE))
+  (modify ?f (safe FALSE)))
 
 (defrule evaluate-stench-none
   (task think) 
@@ -270,17 +308,6 @@
   =>
   (printout t "With stench in (" ?x "," ?y "), maybe the wumpus is in (" ?x2  "," ?y2 ")." crlf)
   (modify ?f (has-wumpus MAYBE)))
-
-(defrule evaluate-stench-wumpus
-  (task think) 
-  (cave (x ?x)(y ?y)(stench TRUE))
-    (printout t "With stench in (" ?count ")." crlf)
-  ?count <- (count-query-results adj-where-potential-wumpus x y)
-  (printout t "With stench in (" ?count ")." crlf)
-  (== ?count, 1)
-  =>
-  (printout t "With stench in (" ?x "," ?y "), the wumpus is in (" ?x2  "," ?y2 ")." crlf)
-  (modify ?f (has-wumpus TRUE)))
 
 (defrule evaluate-breeze-none
   (task think) 
