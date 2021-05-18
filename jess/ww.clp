@@ -12,6 +12,7 @@
   (slot x (type INTEGER))
   (slot y (type INTEGER))
   (slot gold (default 0)(type INTEGER))
+  (slot arrow (default 0))
   (slot alive (default TRUE)))
 
 (deftemplate desire "a hunter's desires"
@@ -248,6 +249,18 @@
   (modify ?cave (glitter FALSE)))
 
 ;; THINK rules --------------------------------------------------------------
+(defrule kill-wumpus
+  "deduce wumpus if there is only 1 adjacent cave where it can be"
+  (task think)
+  (hunter (agent ?agent) (x ?x)(y ?y)(arrow ~0))
+  (adj ?x ?y ?x2 ?y2)
+  ?f <- (cave (x ?x2)(y ?y2)(has-wumpus TRUE))
+  ?w <-	(wumpus (x ?x2)(y ?y2)(alive TRUE))
+  =>
+  (printout t "-- Hunter KILLS the wumpus at (" ?x2  "," ?y2 ")." crlf)
+  (modify ?w (alive FALSE))
+  (modify ?f (safe TRUE)))
+
 (defquery get-adjacent-where-potential-wumpus
   "query all adj caves where wumpus can be"
   (declare (variables ?x ?y))
@@ -378,7 +391,7 @@
 
 (defrule add-desire-to-head-for-the-exit
   (task think) 
-  (hunter (agent ?agent) (x ?x)(y ?y)(gold ~0))
+  (hunter (agent ?agent) (x ?x)(y ?y)(gold ~0)(arrow 0))
   (cave (x ?x)(y ?y)(fromx ?fx)(fromy ?fy))
   (test (> ?fx 0))
   =>  
