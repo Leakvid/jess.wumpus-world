@@ -8,7 +8,7 @@
  (gold (x 2) (y 3) (amount 10))
  (exit (x 1) (y 1))
  (nocave (x 2) (y 4))
- (hunter (agent Xena)(arrow 1)))
+ (hunter (agent Xena)))
 ;(watch all)
 (reset)
 (run)

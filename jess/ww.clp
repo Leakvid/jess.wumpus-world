@@ -12,7 +12,7 @@
   (slot x (type INTEGER))
   (slot y (type INTEGER))
   (slot gold (default 0)(type INTEGER))
-  (slot arrow (default 0))
+  (slot arrows (default 0))
   (slot alive (default TRUE)))
 
 (deftemplate desire "a hunter's desires"
@@ -127,12 +127,20 @@
 (defrule put-hunter-in-caves
   "Assuming the hunter has no (X,Y) in the caves, find an exit
    and put him there."
-  (task genesis)
+  (task genesis) 
   ?hunter <- (hunter (agent ?a)(x nil)(y nil))
   (exit (x ?x)(y ?y))
   =>
   (printout t ?a " enters the caves at (" ?x "," ?y ")." crlf)
-  (modify ?hunter (x ?x)(y ?y)))
+  (modify ?hunter (x ?x)(y ?y)(arrows (func-count-wumpuses))))
+
+(defquery query-count-wumpuses
+  "count alive wumpuses"
+  (wumpus (alive TRUE)))	
+(deffunction func-count-wumpuses()
+  "count alive wumpuses"
+  (bind ?count (count-query-results query-count-wumpuses))
+  (return ?count))
 
 ;; SIMULATE rules --------------------------------------------------------------
 (defrule meet-the-wumpus
@@ -391,7 +399,7 @@
 
 (defrule add-desire-to-head-for-the-exit
   (task think) 
-  (hunter (agent ?agent) (x ?x)(y ?y)(gold ~0)(arrow 0))
+  (hunter (agent ?agent) (x ?x)(y ?y)(gold ~0)(arrows 0))
   (cave (x ?x)(y ?y)(fromx ?fx)(fromy ?fy))
   (test (> ?fx 0))
   =>  
