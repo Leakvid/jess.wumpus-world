@@ -257,6 +257,8 @@
   (modify ?cave (glitter FALSE)))
 
 ;; THINK rules --------------------------------------------------------------
+
+;; begin custom
 (defrule kill-wumpus
   "kill wumpus if it is in adjacent cave"
   (task think)
@@ -270,48 +272,33 @@
   (modify ?cave (safe TRUE))
   (modify ?wumpus (alive FALSE)))
 
-(defquery get-adjacent-where-potential-wumpus
-  "query all adj caves where wumpus can be"
+(defquery get-adjacent-stenching
+  "find all stenching adjacent fields"
   (declare (variables ?x ?y))
-  (adj ?x ?y ?x2 ?y2)
-  (cave (x ?x2)(y ?y2)(has-wumpus ~FALSE)))	
-
-(deffunction is-wumpus-for-sure (?x ?y)
-  (bind ?count (count-query-results get-adjacent-where-potential-wumpus ?x ?y))
-  (return (= ?count 1)))
+  (adj ?x ?y ?x' ?y') ;; cave is adjacent
+  (cave (x ?x') (y ?y') (stench TRUE))) ;; hunter knows about this cave and it stenches
 
 (defrule can-deduce-wumpus
-  "deduce wumpus if there is only 1 adjacent cave where it can be"
+  "can be sure that there is a wumpus because of surrounding stenching"
   (task think)
+  (hunter (agent ?a)(x ?x)(y ?y))
   (cave (x ?x)(y ?y)(stench TRUE))
-  (test (is-wumpus-for-sure ?x ?y))
   (adj ?x ?y ?x2 ?y2)
-  ?f <- (cave (x ?x2)(y ?y2)(has-wumpus ~FALSE))	
+  ?cave <- (cave (x ?x2) (y ?y2) (has-wumpus MAYBE))
+  (test (> (count-query-results get-adjacent-stenching ?x2 ?y2) 1))
   =>
-  (printout t "-- There MUST be a wumpus in (" ?x2  "," ?y2 ")." crlf)
-  (modify ?f (has-wumpus TRUE)(safe FALSE)))
+  (printout t "-- There MUST be a WUMPUS in (" ?x2  "," ?y2 ")." crlf)
+  (modify ?cave (has-wumpus TRUE)))
 
-(defquery get-adjacent-where-potential-pit
-  "query all adj caves where pit can be"
-  (declare (variables ?x ?y))
-  (adj ?x ?y ?x2 ?y2)
-  (cave (x ?x2)(y ?y2)(has-pit ~FALSE)(safe FALSE)))
-
-(deffunction is-pit-for-sure (?x ?y)
-  (bind ?count (count-query-results get-adjacent-where-potential-pit ?x ?y))
-  (return (= ?count 1)))
-
-(defrule can-deduce-pit
-  "deduce pit if there is only 1 adjacent cave where it can be"
-  (task think)
-  (cave (x ?x)(y ?y)(breeze TRUE))
-  (test (is-pit-for-sure ?x ?y))
-  (adj ?x ?y ?x2 ?y2)
-  ?f <- (cave (x ?x2)(y ?y2)(has-pit ~FALSE))	
+(defrule wumpus-already-found
+  (task think) 
+    (cave (x ?x)(y ?y)(has-wumpus TRUE))
+    ?cave <- (cave (x ?x2)(y ?y2)(has-wumpus MAYBE))
   =>
-  (printout t "-- There MUST be a pit in (" ?x2  "," ?y2 ")." crlf)
-  (modify ?f (has-pit TRUE))
-  (modify ?f (safe FALSE)))
+    (printout t "-- Set wumpus to FALSE at (" ?x "," ?y ") because WUMPUS was already found ("?x2  "," ?y2 ")." crlf)
+    (modify ?cave (has-wumpus FALSE)))
+
+;; end custom
 
 (defrule evaluate-stench-none
   (task think) 
@@ -327,6 +314,7 @@
   (cave (x ?x)(y ?y)(stench TRUE))
   (adj ?x ?y ?x2 ?y2)
   ?f <- (cave (x ?x2)(y ?y2)(has-wumpus UNKNOWN))
+  (cave (x ?x3)(y ?y3)(has-wumpus ~TRUE)) ; check if wumpus was already found
   =>
   (printout t "With stench in (" ?x "," ?y "), maybe the wumpus is in (" ?x2  "," ?y2 ")." crlf)
   (modify ?f (has-wumpus MAYBE)))
