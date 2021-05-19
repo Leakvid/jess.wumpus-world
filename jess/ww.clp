@@ -258,16 +258,17 @@
 
 ;; THINK rules --------------------------------------------------------------
 (defrule kill-wumpus
-  "deduce wumpus if there is only 1 adjacent cave where it can be"
+  "kill wumpus if it is in adjacent cave"
   (task think)
-  (hunter (agent ?agent) (x ?x)(y ?y)(arrow ~0))
+  ?hunter <- (hunter (x ?x)(y ?y)(arrows ?arrows))
   (adj ?x ?y ?x2 ?y2)
-  ?f <- (cave (x ?x2)(y ?y2)(has-wumpus TRUE))
-  ?w <-	(wumpus (x ?x2)(y ?y2)(alive TRUE))
+  ?cave <- (cave (x ?x2)(y ?y2)(has-wumpus TRUE))
+  ?wumpus <- (wumpus (x ?x2)(y ?y2)(alive TRUE))
   =>
   (printout t "-- Hunter KILLS the wumpus at (" ?x2  "," ?y2 ")." crlf)
-  (modify ?w (alive FALSE))
-  (modify ?f (safe TRUE)))
+  (modify ?hunter (arrows (- ?arrows 1)))
+  (modify ?cave (safe TRUE))
+  (modify ?wumpus (alive FALSE)))
 
 (defquery get-adjacent-where-potential-wumpus
   "query all adj caves where wumpus can be"
