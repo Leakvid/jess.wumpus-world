@@ -533,6 +533,21 @@
   (printout t ?agent " goes to (" ?x2 "," ?y2 ") trying to get to (" ?x3 "," ?y3 ")." crlf)
   (modify ?hunter (x ?x2)(y ?y2)))
 
+;; CUSTOM ACT RULES
+(defrule move-backwards
+    (task act)
+    ?hunter <-(hunter (agent ?agent) (x ?x1)(y ?y1))
+    (goal (action go) (x ?x3)(y ?y3))
+    (not (adj ?x1 ?y1 ?x3 ?y3))
+    (cave (x ?x1)(y ?y1) (fromx ?x2) (fromy ?y2))
+    (cave (x ?x2)(y ?y2)(safe TRUE))
+    (adj ?x1 ?y1 ?x2 ?y2)
+    =>
+    (printout t "!!BACK " ?agent " goes to (" ?x2 "," ?y2 ") trying to get to (" ?x3 "," ?y3 ")." crlf)
+    (modify ?hunter (x ?x2)(y ?y2)))
+
+;; END CUSTOM ACT RULES
+
 (defrule delete-desires
   "retracts any desire facts in the database" 
   (task act)
